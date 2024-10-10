@@ -1,15 +1,30 @@
-pipeline {
+pipeline{
     agent any
-    stages {
-        stage('Clone Git Repository') {
-            steps {
-                git 'https://github.com/pranali-sawant20/FinanceMe-Microservice-Project.git'
+    stages{
+        stage('checkout the code from github'){
+            steps{
+                 git url: 'https://github.com/pranali-sawant20/FinanceMe-Microservice-Project.git'
+                 echo 'github url checkout'
             }
         }
-        stage('Build Maven Project') {
-            steps {
-                sh 'mvn clean package'
+        stage('codecompile'){
+            steps{
+                echo 'starting compiling'
+                sh 'mvn compile'
             }
         }
-    }
-}
+        stage('codetesting'){
+            steps{
+                sh 'mvn test'
+            }
+        }
+        stage('qa'){
+            steps{
+                sh 'mvn checkstyle:checkstyle'
+            }
+        }
+        stage('package'){
+            steps{
+                sh 'mvn package'
+            }
+        }

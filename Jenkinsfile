@@ -33,22 +33,26 @@ pipeline{
                 sh 'mvn package'
             }
         }
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    sh "docker build -t ${DOCKER_IMAGE_TAG} --cache-from=${DOCKER_IMAGE_TAG} ."
-                    sh 'docker images'
-                }
+        stage('Create Docker Image') {
+      steps {
+        echo 'This stage will Create a Docker image'
+        sh 'docker build -t cbabu85/healthcare:1.0 .'
+                          }
             }
-        }
-        stage('Push Docker Image to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'Docker-cred', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                    sh "echo $PASS | docker login -u $USER --password-stdin"
-                    sh "docker push ${DOCKER_IMAGE_TAG}"
-                }
+     stage('Login to Dockerhub') {
+      steps {
+        echo 'This stage will loginto Dockerhub' 
+        withCredentials([usernamePassword(credentialsId: 'dockerloginnew', passwordVariable: 'dockerpass', usernameVariable: 'dockeruser')]) {
+        sh 'docker login -u ${dockeruser} -p ${dockerpass}'
             }
-        }
+         }
+     }
+      stage('Docker Push-Image') {
+      steps {
+        echo 'This stage will push my new image to the dockerhub'
+        sh 'docker push pranalisawant/finance-me-microservice:1.0'
+            }
+      }
         stage('Terraform Init') {
             steps {
                 script {

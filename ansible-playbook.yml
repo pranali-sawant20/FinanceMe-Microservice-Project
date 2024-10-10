@@ -1,16 +1,87 @@
-- name : Configure Docker on EC2 Instances
-  hosts : all
-  become: true
-  connection : ssh
-  tasks : 
-  - name: updating apt
-    command : sudo apt-get update
+- hosts: all
+  become: yes
+  name: Setup Finance Me Microservice and Monitoring
+  tasks:
+    # Update and upgrade the system
+    - name: Update and upgrade the system
+      apt:
+        upgrade: dist
+        update_cache: yes
 
-  - name : Install Docker
-    command : sudo apt-get install -y docker.io
+    # Install Docker
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
 
-  - name : Start Docker Service
-    command : sudo systemctl start docker
+    # Start and enable Docker service
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
 
-  - name: Deploy Docker Container
-    command: docker run -itd -p 8084:8081 pranalisawant/finance-me:1.0
+    # Deploy Finance Me microservice container
+    - name: Deploy Finance Me microservice container
+      docker_container:
+        name: finance-me-microservice
+        image: pranalisawant/finance-me-microservice:v1
+        state: started
+        restart_policy: always
+        ports:
+          - "8084:8081"
+
+    # Download and install Node Exporter
+    - name: Download and install Node Exporter
+      shell: |
+        wget https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
+        tar -xvf node_exporter-1.8.2.linux-amd64.tar.gz
+        nohup ./node_exporter-1.8.2.linux-amd64/node_exporter > /dev/null 2>&1 &
+      args:
+        chdir: /opt
+
+    # Download and install Prometheus
+    - name: Download and install Prometheus
+      shell: |
+        wget https://github.com/prometheus/prometheus/releases/download/v2.53.2/prometheus-2.53.2.linux-amd64.tar.gz
+        tar -xvf prometheus-2.53.2.linux-amd64.tar.gz
+      args:
+        chdir: /opt
+
+    # Remove default prometheus.yml
+    - name: Remove default prometheus.yml
+      file:
+        path: /opt/prometheus-2.53.2.linux-amd64/prometheus.yml
+        state: absent
+
+    # Download custom prometheus.yml from repository
+    - name: Download custom prometheus.yml from your repository
+      get_url:
+        url: https://raw.githubusercontent.com/suguslove10/finance-me-microservice/master/prometheus.yml
+        dest: /opt/prometheus-2.53.2.linux-amd64/prometheus.yml
+        mode: '0644'
+        
+    # Replace placeholder in prometheus.yml with actual IP
+    - name: Replace placeholder in prometheus.yml with actual IP
+      replace:
+        path: /opt/prometheus-2.53.2.linux-amd64/prometheus.yml
+        regexp: 'replace_me_with_instance_ip'
+        replace: "{{ prometheus_ip }}"
+
+    # Start Prometheus with the custom prometheus.yml
+    - name: Start Prometheus with the custom prometheus.yml
+      shell: |
+        nohup ./prometheus-2.53.2.linux-amd64/prometheus --config.file=prometheus-2.53.2.linux-amd64/prometheus.yml > /dev/null 2>&1 &
+      args:
+        chdir: /opt
+
+    # Run Grafana container
+    # this is container
+    - name: Run Grafana container
+      docker_container:
+        name: grafana
+        image: grafana/grafana
+        state: started
+        restart_policy: always
+        ports:
+          - "3000:3000"

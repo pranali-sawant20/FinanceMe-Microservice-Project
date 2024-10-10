@@ -1,8 +1,5 @@
 pipeline{
     agent any
-      environment {
-        AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
         DOCKER_IMAGE_TAG      = "pranalisawant/finance-me-microservice:v1"
     }
     stages{
@@ -53,6 +50,10 @@ pipeline{
         sh 'docker push pranalisawant/finance-me-microservice:1.0'
             }
       }
+        stage('aws_login'){
+            withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'awsaccess', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+    // some block
+}
         stage('Terraform Init') {
             steps {
                 script {

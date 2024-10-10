@@ -19,17 +19,17 @@ variable "key_name" {
 variable "ssh_private_key" {
   description = "The private key for SSH access"
   type        = string
-  default     = "~/.ssh/id_ed25519"  # Update if using a different key
+  default     = "~/.ssh/id_rsa"  # Update if using a different key
 }
 
 variable "ssh_public_key" {
   description = "The public key for SSH access"
   type        = string
-  default     = "~/.ssh/id_ed25519.pub"  # Update if using a different key
+  default     = "~/.ssh/id_rsa.pub"  # Update if using a different key
 }
 
 variable "ami_id" {
   description = "The ID of the AMI to use for the instance"
   type        = string
-  default     = "ami-0522ab6e1ddcc7055"  # Ensure this AMI ID is valid in your region
+  default     = "ami-0fff1b9a61dec8a5f"  # Ensure this AMI ID is valid in your region
 }

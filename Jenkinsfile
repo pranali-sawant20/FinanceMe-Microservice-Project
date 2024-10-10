@@ -1,7 +1,5 @@
 pipeline{
     agent any
-        DOCKER_IMAGE_TAG      = "pranalisawant/finance-me-microservice:v1"
-    }
     stages{
         stage('checkout the code from github'){
             steps{

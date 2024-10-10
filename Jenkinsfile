@@ -3,7 +3,7 @@ pipeline{
       environment {
         AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-        DOCKER_IMAGE_TAG      = "suguslove10/finance-me-microservice:v1"
+        DOCKER_IMAGE_TAG      = "pranalisawant/finance-me-microservice:v1"
     }
     stages{
         stage('checkout the code from github'){

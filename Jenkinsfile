@@ -1,57 +1,37 @@
-pipeline{
+pipeline {
     agent any
-    stages{
-        stage('checkout the code from github'){
-            steps{
-                 git url: 'https://github.com/pranali-sawant20/FinanceMe-Microservice-Project.git'
-                 echo 'github url checkout'
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        DOCKER_IMAGE_TAG      = "pranalisawant/finance-me-microservice:v1"
+    }
+    stages {
+        stage('Clone Git Repository') {
+            steps {
+                git 'https://github.com/pranali-sawant20/FinanceMe-Microservice-Project.git'
             }
         }
-        stage('codecompile'){
-            steps{
-                echo 'starting compiling'
-                sh 'mvn compile'
+        stage('Build Maven Project') {
+            steps {
+                sh 'mvn clean package'
             }
         }
-        stage('codetesting'){
-            steps{
-                sh 'mvn test'
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE_TAG} --cache-from=${DOCKER_IMAGE_TAG} ."
+                    sh 'docker images'
+                }
             }
         }
-        stage('qa'){
-            steps{
-                sh 'mvn checkstyle:checkstyle'
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'Docker-cred', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                    sh "echo $PASS | docker login -u $USER --password-stdin"
+                    sh "docker push ${DOCKER_IMAGE_TAG}"
+                }
             }
         }
-        stage('package'){
-            steps{
-                sh 'mvn package'
-            }
-        }
-        stage('Create Docker Image') {
-      steps {
-        echo 'This stage will Create a Docker image'
-        sh 'docker build -t pranalisawant/finance-me-microservice:1.0 .'
-                          }
-            }
-     stage('Login to Dockerhub') {
-      steps {
-        echo 'This stage will loginto Dockerhub' 
-        withCredentials([usernamePassword(credentialsId: 'dockerloginnew', passwordVariable: 'dockerpass', usernameVariable: 'dockeruser')]) {
-        sh 'docker login -u ${dockeruser} -p ${dockerpass}'
-            }
-         }
-     }
-      stage('Docker Push-Image') {
-      steps {
-        echo 'This stage will push my new image to the dockerhub'
-        sh 'docker push pranalisawant/finance-me-microservice:1.0'
-            }
-      }
-        stage('aws_login'){
-            withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'awsaccess', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-    // some block
-}
         stage('Terraform Init') {
             steps {
                 script {
